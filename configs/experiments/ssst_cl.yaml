@@ -1,0 +1,49 @@
+# ==========================================
+#  Experiment: SSST+CL (SSST with Curriculum Pseudo-Labeling)
+#  SSST + gradually increasing pseudo-labeled target samples.
+#  Called CLPL internally in the codebase.
+#  Paper reference: "SSST+CL" row in Tables 1-3.
+# ==========================================
+#
+# Usage:
+#   python scripts/train.py \
+#     batch_size=64 lr=5e-5 fs=16000 \
+#     data_type=dns \
+#     unsupervised=True use_labeled=True use_tgt_labels=True use_clpl=True \
+#     pretrained=True \
+#     target_percent=0.5 increase_every=1 \
+#     pretrained_ckpt=/path/to/supervised.ckpt \
+#     pretrained_ckpt_2=/path/to/other_supervised.ckpt
+#
+# ==========================================
+
+batch_size: 64
+lr: 5e-5
+fs: 16000
+
+data_type: dns
+source_domain: librispeech
+
+unsupervised: True
+pretrained: True
+use_other_weights: True
+
+# Source regularization
+use_labeled: True
+source_percent: 0.3
+reduce_from: 2
+reduce_amount: 0.03
+min_source: 2
+
+# Curriculum pseudo-labeling
+use_tgt_labels: True       # Include pseudo-labeled target samples
+use_clpl: True             # Enable curriculum scheduling
+target_percent: 0.5        # Target sample fraction
+increase_every: 1          # Increase target ratio every N epochs
+increase_amount: 0.03
+max_increase: 23
+alpha_amount: 0.05
+
+# Set these to your checkpoint paths:
+# pretrained_ckpt: ./models/supervised_librispeech/best.ckpt
+# pretrained_ckpt_2: ./models/supervised_librispeech/second_best.ckpt

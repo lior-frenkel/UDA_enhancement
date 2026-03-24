@@ -1,0 +1,29 @@
+# ==========================================
+#  Experiment: Supervised Baseline  
+#  Train a UNet on the source domain with paired data.
+#  Paper reference: "Supervised" row in Tables 1-3.
+# ==========================================
+#
+# Usage:
+#   python scripts/train.py \
+#     batch_size=64 lr=1e-4 fs=16000 \
+#     data_type=librispeech
+#
+# For DNS source:
+#   python scripts/train.py \
+#     batch_size=64 lr=1e-4 fs=16000 \
+#     data_type=dns
+#
+# ==========================================
+
+# Core training parameters
+batch_size: 64
+lr: 1e-4
+fs: 16000
+epochs: 500
+
+# No adaptation — pure supervised
+use_grl: False
+unsupervised: False
+pretrained: False
+classify_domains: False

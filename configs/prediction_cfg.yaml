@@ -1,0 +1,154 @@
+defaults:
+  - override hydra/job_logging: colorlog
+  - override hydra/hydra_logging: colorlog
+
+# ==========================================
+#  Dataset Configuration
+# ==========================================
+
+data_type: librispeech       # Training domain: librispeech / dns
+data_type_test: librispeech  # Test domain: librispeech / dns
+sub_data_type_test: ''       # Sub-type for test: '' / reverb / pra / with_noise / rand_rev
+use_musan_music: False
+use_libri_s: False
+use_wham_n: False
+
+# Data paths
+data_path: ./data/processed
+data_dir:
+  train: ${data_path}/train
+  val:   ${data_path}/val
+  test:  ${data_path}/test
+
+checkpoint_dir: ./models
+
+# Domain-specific paths
+source_path_librispeech_16k: ${data_path}/16k/librispeech
+source_path_dns_16k: ${data_path}/16k/dns
+source_path_librispeech_labeled_16k: ${data_path}/16k/librispeech/train_full_probs5
+source_path_dns_labeled_16k: ${data_path}/16k/dns/train_full_probs3
+
+reports_path: ./reports
+
+# ==========================================
+#  Audio / STFT Parameters
+# ==========================================
+
+fs: 16000
+window_size: 256
+overlap: 0.5
+num_frames: 512        # Frames per test sample (longer than training)
+dont_use_end: 1
+target: stft_RI
+input_map: stft_RI
+use_h5: True
+samples_per_snr: 50
+
+# ==========================================
+#  Evaluation Settings
+# ==========================================
+
+mode: test
+device: cuda
+gpus: -1
+precision: 16
+seed: 2036
+eps: 1e-6
+num_workers: 28
+
+test_batch_size: 1
+val_batch_size: 1
+pin_memory: False
+
+pesq: True
+stoi: True
+version: 0            # Version of checkpoint to load
+
+# Prediction behavior
+cut_prediction: True   # Chunk long signals for memory efficiency
+use_overlap: False
+overlap_frames: 0.5
+
+# Output
+save_plots_path: ${reports_path}/figures
+save_waves_path: ${reports_path}/waves
+
+# ==========================================
+#  Model Settings (must match training)
+# ==========================================
+
+model_name: UNet
+hidden_size: 64
+depth: 5
+kernel_size: 3
+padding: 1
+dropout: False
+dropout_fact: 0.2
+use_prelu: False
+deep_unet: False
+
+reconst_noise: True
+use_sisdri: True
+use_sisdri_mse: False
+spec_augment: False
+
+# ==========================================
+#  Domain Adaptation (match training config)
+# ==========================================
+
+source_domain: dns
+target_domain: librispeech
+use_grl: False
+bce_percent: 0.5
+pretrained: False
+classify_domains: False
+unsupervised: False
+use_labeled: False
+teacher_update: False
+use_other_weights: False
+source_percent: 0.3
+use_clpl: False
+use_tgt_labels: False
+target_percent: 0.1
+increase_every: 3
+
+# Pretrained checkpoints (set these to your model paths)
+pretrained_ckpt: null
+pretrained_ckpt_2: null
+pretrained_classifier_ckpt: null
+
+# ==========================================
+#  Dereverberation
+# ==========================================
+
+dereverb: False
+use_pra: False
+use_corners: False
+with_noise: False
+from_reverb: False
+from_noise: False
+rand_rev: False
+discrete_rt60: False
+
+# ==========================================
+#  Misc flags
+# ==========================================
+
+normalize: False
+predict_single: False
+test_diverse: False
+data_loader_shuffle: True
+batch_size: 64
+criterion: MSELoss
+lr: 1e-4
+by_pesq: False
+by_stoi: False
+by_sisdr: False
+reverse: True
+make_hist_source: False
+return_full: False
+remove_small_freq: False
+pred_spec: False
+spec_mse: False
+combined_loss: False
+verbose: 1

@@ -1,0 +1,82 @@
+# ==========================================
+#  Data Generation Configuration
+# ==========================================
+
+data_type: librispeech   # librispeech / dns
+
+# Noise source selection
+use_musan_music: False   # Use MUSAN music as noise
+use_musan_n: False       # Use MUSAN noise
+use_demand_n: False      # Use DEMAND noise
+use_libri_s: False       # Use LibriSpeech speech with DNS noise
+
+# ==========================================
+#  Raw Data Paths  
+#  Override these with your local dataset paths
+# ==========================================
+
+s_path: /path/to/LibriSpeech/train-clean-360
+n_path: /path/to/wham_noise
+
+dns_s_path: /path/to/dns_dataset/datasets/clean
+dns_n_path: /path/to/dns_dataset/datasets/noise
+
+musan_path: /path/to/musan
+demand_path: /path/to/DEMAND
+
+# ==========================================
+#  Generation Settings
+# ==========================================
+
+mode: train              # train / val / test
+train_percent: 0.8       # Train split ratio
+max_sentences: 50000     # Number of samples to generate
+test_max_sentences: 250
+samples_per_snr: 50
+test_indx_start: 1
+
+# Output format
+save_waves: True         # Save raw waveforms
+save_imgs: False         # Save preprocessed STFT images
+save_data_path: ./data/processed
+reconst_noise: False     # Save noise channel in output
+return_full: False       # Save full-length STFT
+normalize: False
+norm_target: True
+
+# ==========================================
+#  Audio Parameters
+# ==========================================
+
+fs: 16000
+window_size: 256
+overlap: 0.5
+num_frames: 129
+target: log_spec
+input_map: stft
+
+# Spec augment (for data generation, usually off)
+spec_augment: False
+spec_aug_time_jump: 64
+N_max: 30
+N_min: 10
+K_max: 30
+K_min: 10
+
+# ==========================================
+#  Reverb Generation (pyroomacoustics)
+# ==========================================
+
+create_reverb: False     # Generate reverberant data
+use_pra: False           # Use pyroomacoustics RIR
+use_corners: False       # L-shaped rooms
+add_noise_outside: False # Add noise after reverberation
+same_rt60: False         # Fixed RT60 (0.5s) or random
+
+# Misc
+seed: 2036
+eps: 1e-6
+num_workers: 28
+pin_memory: False
+plot: False
+save_plots_path: ./reports/figures

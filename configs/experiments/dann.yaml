@@ -1,0 +1,39 @@
+# ==========================================
+#  Experiment: DANN / GRL Domain Adaptation
+#  Two-step process:
+#    Step 1: Pre-train domain classifier (classify_domains=True)
+#    Step 2: Fine-tune with gradient reversal (use_grl=True)
+#  Paper reference: "DANN" row in Tables 1-3.
+# ==========================================
+#
+# Step 1 — Pre-train domain classifier:
+#   python scripts/train.py \
+#     batch_size=64 lr=1e-4 fs=16000 \
+#     data_type=dns source_domain=librispeech \
+#     classify_domains=True
+#
+# Step 2 — Fine-tune with GRL:
+#   python scripts/train.py \
+#     batch_size=64 lr=1e-4 fs=16000 \
+#     data_type=dns source_domain=librispeech \
+#     use_grl=True bce_percent=0.05 pretrained=True \
+#     pretrained_ckpt=/path/to/supervised.ckpt \
+#     pretrained_classifier_ckpt=/path/to/classifier.ckpt
+#
+# ==========================================
+
+# Step 2 config (GRL fine-tuning)
+batch_size: 64
+lr: 1e-4
+fs: 16000
+
+source_domain: librispeech
+data_type: dns          # Target domain data
+
+use_grl: True
+bce_percent: 0.05       # Domain classification loss weight
+pretrained: True         # Load pretrained supervised weights
+
+# Set these to your checkpoint paths:
+# pretrained_ckpt: ./models/supervised_librispeech/best.ckpt
+# pretrained_classifier_ckpt: ./models/classifier/best.ckpt

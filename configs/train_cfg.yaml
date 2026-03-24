@@ -1,0 +1,246 @@
+defaults:
+  - override hydra/job_logging: colorlog
+  - override hydra/hydra_logging: colorlog
+
+# ==========================================
+#  Dataset Configuration
+# ==========================================
+
+data_type: librispeech  # librispeech / dns
+use_musan_music: False   # Use MUSAN music corpus as noise source
+use_musan_n: False       # Use MUSAN noise corpus
+use_libri_s: False       # If True and data_type=dns, use LibriSpeech speech + DNS noise
+use_wham_n: False        # If True and data_type=dns, use DNS speech + WHAM! noise
+
+# --- Data paths (override with your local paths) ---
+data_path: ./data/processed
+data_dir:
+  train: ${data_path}/train
+  val:   ${data_path}/val
+  test:  ${data_path}/test
+
+# Domain-specific data paths (16 kHz)
+source_path_librispeech_16k: ${data_path}/16k/librispeech
+source_path_dns_16k: ${data_path}/16k/dns
+
+# Labeled source data (for SRST/CLPL with pseudo-label selection)
+source_path_librispeech_labeled_16k: ${data_path}/16k/librispeech/train_full_probs5
+source_path_dns_labeled_16k: ${data_path}/16k/dns/train_full_probs3
+
+# Reports directory
+reports_path: ./reports
+
+# ==========================================
+#  Audio / STFT Parameters
+# ==========================================
+
+fs: 16000
+window_size: 256       # Base FFT length (auto-scaled: 512 for 16kHz, 256 for 8kHz)
+overlap: 0.5           # STFT hop = window_size * overlap
+num_frames: 129        # Number of STFT frames per training sample
+dont_use_end: 1        # Trim end of utterance
+
+target: stft_RI        # Target representation
+input_map: stft_RI     # Input representation
+use_h5: False          # Use pre-saved HDF5 data
+spec_augment: False    # Enable SpecAugment
+spec_aug_time_jump: 64
+N_max: 30
+N_min: 10
+K_max: 30
+K_min: 10
+
+# ==========================================
+#  Model Architecture
+# ==========================================
+
+model_name: UNet
+hidden_size: 64        # Base hidden dimension
+depth: 5               # Encoder/decoder depth
+kernel_size: 3
+padding: 1
+dropout: False
+dropout_fact: 0.2
+use_prelu: False       # PReLU instead of ReLU
+deep_unet: False       # Extra bottleneck layer
+
+# Output configuration
+reconst_noise: True    # Predict both enhanced and noise STFT (4-channel output)
+use_sisdri: True       # SI-SDRi loss
+use_sisdri_mse: False  # Combined SI-SDRi + MSE loss
+
+# ==========================================
+#  Training Hyperparameters
+# ==========================================
+
+optimizer: Adam
+lr: 1e-4
+epochs: 500
+batch_size: 64
+train_batch_size: 64
+val_batch_size: 64
+test_batch_size: 64
+beta1: 0.9
+beta2: 0.999
+criterion: MSELoss
+pin_memory: False
+data_loader_shuffle: True
+num_workers: 28
+
+# Learning rate scheduling
+use_sched: False
+lr_sched: step
+step:
+  step_size: 30
+  gamma: 0.1
+plateau:
+  factor: 0.5
+  patience: 5
+
+# ==========================================
+#  Trainer / Checkpointing
+# ==========================================
+
+device: cuda
+gpus: -1
+precision: 16
+seed: 2036
+eps: 1e-6
+patience: 50
+save_top_k: 5
+save_last: True
+ckpt_monitor: val_loss
+resume_from_checkpoint: null
+check_val_every_n_epoch: 1
+
+# Debug
+debug: False
+_d: False
+
+# --- Additional flags used internally ---
+mode: train
+return_full: False        # Save full-length STFT (for test/eval)
+make_hist_source: False   # Source histogram analysis (eval only)
+remove_small_freq: False  # Zero low-frequency bins
+pred_spec: False          # Predict log-spec alongside RI
+spec_mse: False           # MSE on log-spec output
+combined_loss: False      # NLL + SI-SDR combined
+cut_prediction: True      # Chunk long signals at inference
+alter_inx: 0              # Starting alternation index
+max_alter: 30             # Max teacher-student alternations
+verbose: 1
+
+# ==========================================
+#  Pretrained Checkpoints
+#  Set these to paths of your trained models.
+# ==========================================
+
+# Supervised pretrained model (used by DANN, RemixIT, SRST)
+pretrained_ckpt: null
+# Second pretrained model (teacher init for RemixIT with different weights)
+pretrained_ckpt_2: null
+# Pretrained domain classifier (for DANN fine-tuning)
+pretrained_classifier_ckpt: null
+
+# ==========================================
+#  Domain Adaptation Settings
+# ==========================================
+
+source_domain: dns           # Source domain: librispeech / dns
+target_domain: librispeech   # Target domain: librispeech / dns
+
+# --- DANN / GRL ---
+use_grl: False               # Enable gradient reversal layer
+bce_percent: 0.5             # Weight of domain classification loss
+pretrained: False             # Use pretrained weights
+classify_domains: False       # Train domain classifier (pre-training step)
+
+# --- RemixIT / SRST ---
+unsupervised: False           # Enable teacher-student UDA
+teacher_update: False         # Update teacher periodically
+alter_teacher: False          # Alternate teacher/student
+alter_every: 20               # Epochs between teacher updates
+use_other_weights: False      # Init student from different checkpoint
+permute: False                # Permute noises for remix
+save_mix_batch: True
+
+# --- SRST (source-regularized self-training) ---
+use_labeled: False            # Include supervised source samples
+source_percent: 0.3           # Fraction of source samples
+reduce_from: 2                # Start reducing source from this epoch
+reduce_amount: 0.03           # Reduction per step
+min_source: 2                 # Minimum source samples per batch
+source_only: False
+rand_source: False            # Random vs. pseudo-label-selected source
+source_by_var: False          # Select by variance
+
+# --- CLPL (curriculum pseudo-labeling) ---
+use_clpl: False
+use_tgt_labels: False         # Include pseudo-labeled target samples
+target_percent: 0.1           # Initial target fraction
+increase_amount: 0.03
+increase_every: 3
+max_increase: 23
+alpha_amount: 0.05
+
+# --- Supervised fine-tuning ---
+supervised: False
+num_tgt_samples: 5000
+weight_reg: False
+reg_factor: 0.0005
+target_only: False
+
+# ==========================================
+#  Dereverberation
+# ==========================================
+
+dereverb: False
+use_pra: False               # pyroomacoustics RIR
+use_corners: False            # L-shaped rooms
+with_noise: False
+from_reverb: False
+from_noise: False
+rand_rev: False
+
+# ==========================================
+#  Evaluation
+# ==========================================
+
+pesq: True
+stoi: True
+eval_every: 10
+version: 0
+
+# ==========================================
+#  Hydra Output Directory
+# ==========================================
+
+hydra:
+  run:
+    dir: ./models/${hydra.job.override_dirname}/
+  job:
+    config:
+      override_dirname:
+        kv_sep: '='
+        item_sep: ','
+        exclude_keys: [
+          'hydra.job_logging.handles.file.filename',
+          'device', 'num_workers', 'verbose',
+          'log', 'ddp', 'ddp_backend', 'rank', 'world_size']
+  job_logging:
+    handlers:
+      file:
+        class: logging.FileHandler
+        mode: w
+        formatter: colorlog
+        filename: trainer.log
+      console:
+        class: logging.StreamHandler
+        formatter: colorlog
+        stream: ext://sys.stderr
+  hydra_logging:
+    handlers:
+      console:
+        class: logging.StreamHandler
+        formatter: colorlog
+        stream: ext://sys.stderr
