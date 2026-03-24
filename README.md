@@ -55,7 +55,7 @@ We investigate several unsupervised domain adaptation (UDA) strategies for adapt
 
 ```bash
 # Clone and install
-git clone https://github.com/YOUR_USERNAME/UDA_enhancement.git
+git clone https://github.com/lior-frenkel/UDA_enhancement.git
 cd UDA_enhancement
 pip install -e ".[data_gen]"
 
